@@ -1,0 +1,28 @@
+graph TB
+    subgraph "Data Layer"
+        A[Raw Data<br/>data/raw/housing.csv] --> B[DVC Versioning<br/>S3 Storage]
+    end
+
+    subgraph "Training Pipeline"
+        C[Kubernetes Job<br/>pipelines/train.py] --> D[MLflow Tracking<br/>In-Cluster Deployment]
+        D --> E[Model Registry<br/>CaliforniaHousingRegressor]
+        D --> F[S3 Artifact Store<br/>Model Artifacts + Code]
+    end
+
+    subgraph "Inference Layer"
+        G[Batch Inference<br/>pipelines/inference.py]
+        H[KServe InferenceService<br/>MLServer Runtime]
+        F --> G
+        F --> H
+        E --> G
+    end
+
+    subgraph "Serving Architecture"
+        I[KServe V2 Protocol<br/>Tensor-based Requests]
+        J[MLflow PyFunc Model<br/>Preprocessing + Model]
+        H --> I
+        I --> J
+    end
+
+    B --> C
+    A --> B
